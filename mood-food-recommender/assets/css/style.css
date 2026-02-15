@@ -1,0 +1,443 @@
+/* MoodFood - Main Stylesheet */
+
+:root {
+    --baby-pink: #ffb6c1;
+    --light-pink: #ffebf3;
+    --medium-pink: #ff91a4;
+    --dark-pink: #ff69b4;
+    --accent-pink: #ff1493;
+    --text-dark: #5a3d5c;
+    --text-light: #ffebf3;
+    --shadow-soft: 0 4px 15px rgba(255, 182, 193, 0.3);
+    --shadow-medium: 0 8px 25px rgba(255, 182, 193, 0.4);
+    --gradient-pink: linear-gradient(135deg, #ffb6c1 0%, #ff69b4 100%);
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #ffebf3 0%, #ffe4ec 100%);
+    color: var(--text-dark);
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+/* Hero Section */
+.hero-section {
+    padding: 4rem 0;
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+}
+
+.min-vh-80 {
+    min-height: 80vh;
+}
+
+.hero-content {
+    padding: 2rem 0;
+}
+
+.hero-title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+}
+
+.hero-title .highlight {
+    color: var(--dark-pink);
+    background: linear-gradient(135deg, var(--dark-pink) 0%, var(--accent-pink) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-subtitle {
+    font-size: 1.25rem;
+    color: var(--text-dark);
+    margin-bottom: 2rem;
+    opacity: 0.9;
+}
+
+.hero-features {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.1rem;
+    color: var(--text-dark);
+}
+
+.feature-item i {
+    color: var(--dark-pink);
+    font-size: 1.5rem;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.btn-hero-primary {
+    background: var(--gradient-pink);
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: var(--shadow-soft);
+}
+
+.btn-hero-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+    color: white;
+}
+
+.btn-hero-secondary {
+    background: white;
+    color: var(--dark-pink);
+    padding: 0.75rem 2rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: 2px solid var(--dark-pink);
+}
+
+.btn-hero-secondary:hover {
+    background: var(--light-pink);
+    color: var(--accent-pink);
+    transform: translateY(-2px);
+}
+
+/* Hero Image with Floating Cards */
+.hero-image {
+    position: relative;
+    height: 500px;
+}
+
+.floating-card {
+    position: absolute;
+    background: white;
+    padding: 1.5rem;
+    border-radius: 20px;
+    box-shadow: var(--shadow-medium);
+    text-align: center;
+    border: 2px solid var(--baby-pink);
+    transition: all 0.3s ease;
+}
+
+.floating-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 12px 30px rgba(255, 182, 193, 0.5);
+}
+
+.card-emoji {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+}
+
+.floating-card p {
+    margin: 0;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.card-1 {
+    top: 10%;
+    left: 10%;
+    animation: float 3s ease-in-out infinite;
+}
+
+.card-2 {
+    top: 50%;
+    right: 10%;
+    animation: float 3s ease-in-out infinite 1s;
+}
+
+.card-3 {
+    bottom: 10%;
+    left: 30%;
+    animation: float 3s ease-in-out infinite 2s;
+}
+
+/* Features Section */
+.features-section {
+    background: white;
+    border-radius: 30px;
+    padding: 4rem 2rem;
+    margin: 4rem 0;
+    box-shadow: var(--shadow-soft);
+}
+
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+}
+
+.section-subtitle {
+    font-size: 1.2rem;
+    color: var(--text-dark);
+    opacity: 0.8;
+    margin-bottom: 3rem;
+}
+
+.feature-step {
+    text-align: center;
+    padding: 2rem;
+    background: var(--light-pink);
+    border-radius: 20px;
+    height: 100%;
+    transition: all 0.3s ease;
+    border: 2px solid var(--baby-pink);
+}
+
+.feature-step:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-medium);
+    background: white;
+}
+
+.step-number {
+    width: 60px;
+    height: 60px;
+    background: var(--gradient-pink);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 auto 1.5rem;
+}
+
+.feature-step h4 {
+    color: var(--text-dark);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.feature-step p {
+    color: var(--text-dark);
+    opacity: 0.8;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN - INDEX PAGE
+   ============================================ */
+
+/* Tablets (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .hero-section {
+        padding: 3rem 0;
+        min-height: 70vh;
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.1rem;
+    }
+    
+    .hero-image {
+        height: 400px;
+    }
+    
+    .features-section {
+        padding: 3rem 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+    }
+}
+
+/* Large Phones / Small Tablets (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+    .hero-section {
+        padding: 2rem 0;
+        min-height: auto;
+    }
+    
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+    
+    .hero-image {
+        height: 300px;
+        margin-top: 2rem;
+    }
+    
+    .floating-card {
+        padding: 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .card-emoji {
+        font-size: 2rem;
+    }
+    
+    .features-section {
+        padding: 2.5rem 1.5rem;
+        margin: 2rem 0;
+        border-radius: 20px;
+    }
+    
+    .section-title {
+        font-size: 1.75rem;
+    }
+    
+    .section-subtitle {
+        font-size: 1rem;
+    }
+    
+    .feature-step {
+        padding: 1.5rem;
+    }
+    
+    .step-number {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+}
+
+/* Mobile Phones (320px - 480px) */
+@media (max-width: 480px) {
+    .hero-section {
+        padding: 1.5rem 0;
+        min-height: auto;
+    }
+    
+    .hero-content {
+        padding: 1rem 0;
+    }
+    
+    .hero-title {
+        font-size: 1.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 0.95rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .hero-features {
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .feature-item {
+        font-size: 0.95rem;
+    }
+    
+    .feature-item i {
+        font-size: 1.2rem;
+    }
+    
+    .hero-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-hero-primary,
+    .btn-hero-secondary {
+        width: 100%;
+        padding: 0.875rem 1.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .hero-image {
+        height: 250px;
+        margin-top: 1.5rem;
+    }
+    
+    .floating-card {
+        padding: 0.75rem;
+        border-radius: 15px;
+        font-size: 0.85rem;
+    }
+    
+    .card-emoji {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .floating-card p {
+        font-size: 0.8rem;
+    }
+    
+    .card-1 {
+        top: 5%;
+        left: 5%;
+    }
+    
+    .card-2 {
+        top: 45%;
+        right: 5%;
+    }
+    
+    .card-3 {
+        bottom: 5%;
+        left: 20%;
+    }
+    
+    .features-section {
+        padding: 2rem 1rem;
+        margin: 2rem 0;
+        border-radius: 20px;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .section-subtitle {
+        font-size: 0.95rem;
+        margin-bottom: 2rem;
+    }
+    
+    .feature-step {
+        padding: 1.25rem;
+        border-radius: 15px;
+    }
+    
+    .step-number {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .feature-step h4 {
+        font-size: 1.1rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .feature-step p {
+        font-size: 0.9rem;
+    }
+}
+
