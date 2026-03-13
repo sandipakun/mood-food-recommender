@@ -1,10 +1,6 @@
 <?php
-// Ensure session is started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Include utils for isLoggedIn function
+// Global session + config are handled in config/config.php.
+// This header only needs utilities to check auth state.
 require_once __DIR__ . '/utils.php';
 ?>
 <header class="header-custom">

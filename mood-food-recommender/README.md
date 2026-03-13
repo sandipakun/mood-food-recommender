@@ -23,6 +23,13 @@ A responsive, premium SaaS web application that recommends recipes based on user
 - **UI Framework**: Bootstrap 5
 - **Server**: Apache/Nginx (LAMP stack)
 
+### Recommended Local XAMPP Setup
+
+- Apache: port **80**
+- MySQL: port **3307**
+- Database: `mood_food_recommender`
+- DB user: `root` (no password)
+
 ## Project Structure
 
 ```
@@ -41,6 +48,24 @@ mood-food-recommender/
 │   ├── js/
 │   │   └── app.js         # Main JavaScript
 │   └── images/            # Recipe images (optional)
+├── admin/                  # Admin panel (dashboard, CRUD, analytics)
+│   ├── assets/
+│   │   ├── css/admin.css
+│   │   └── js/admin.js
+│   ├── includes/           # Admin layout + helpers
+│   │   ├── config.php
+│   │   ├── header.php
+│   │   ├── sidebar.php
+│   │   └── footer.php
+│   ├── dashboard.php
+│   ├── login.php
+│   ├── logout.php
+│   ├── recipes.php
+│   ├── add_recipe.php
+│   ├── moods.php
+│   ├── users.php
+│   ├── analytics.php
+│   └── settings.php
 ├── config/
 │   ├── config.php         # Application configuration
 │   └── database.php       # Database connection
@@ -49,7 +74,8 @@ mood-food-recommender/
 │   └── utils.php          # Utility functions
 ├── sql/
 │   ├── schema.sql         # Database schema
-│   └── sample_data.sql    # Sample recipes and data
+│   ├── sample_data.sql    # Sample recipes and data
+│   └── admin_panel_upgrade.sql # Admin users + ratings tables
 ├── index.php              # Home page
 ├── recipe.php             # Recipe detail page
 ├── login.php              # Login page
@@ -85,21 +111,29 @@ mood-food-recommender/
 
 3. **Import Database Schema**
    ```bash
+   # Default MySQL port
    mysql -u root -p mood_food_recommender < sql/schema.sql
+
+   # If your MySQL runs on a custom port (e.g. 3307 on XAMPP):
+   # mysql -u root -p -P 3307 mood_food_recommender < sql/schema.sql
    ```
 
 4. **Import Sample Data**
    ```bash
    mysql -u root -p mood_food_recommender < sql/sample_data.sql
+
+   # Or, with custom port:
+   # mysql -u root -p -P 3307 mood_food_recommender < sql/sample_data.sql
    ```
 
 5. **Configure Database Connection**
    Edit `config/database.php`:
    ```php
    define('DB_HOST', 'localhost');
+   define('DB_PORT', 3307); // Use 3307 for XAMPP default in this project
    define('DB_NAME', 'mood_food_recommender');
-   define('DB_USER', 'your_username');
-   define('DB_PASS', 'your_password');
+   define('DB_USER', 'root');
+   define('DB_PASS', '');
    ```
 
 6. **Configure Base URL**
@@ -121,6 +155,39 @@ mood-food-recommender/
 
 9. **Access Application**
    Open browser: `http://localhost/mood-food-recommender`
+
+## Admin Panel
+
+The project includes a professional admin panel for managing recipes, moods, users, and analytics.
+
+### Configuration overview
+
+- **Central config**: All global settings, sessions, and helpers are loaded via `config/config.php`.
+- **Sessions**: Session ini settings are applied before `session_start()` in `config/config.php`, and sessions are started once globally.
+- **PDO**: `config/database.php` provides a shared `getDB()` function using PDO, `utf8mb4`, and port `3307`.
+
+### 1) Run the admin DB upgrade
+
+Import the admin upgrade SQL (adds `admin_users` and `recipe_ratings` tables):
+
+```bash
+mysql -u root -p mood_food_recommender < sql/admin_panel_upgrade.sql
+```
+
+### 2) Open the admin login
+
+Open:
+
+- `http://localhost/mood-food-recommender/admin/login.php`
+
+### 3) First-time admin setup (bootstrap)
+
+If **no rows exist in `admin_users`**, the login page will automatically show a **“Create the first admin account”** form.
+After creating it, log in and you’ll be redirected to the admin dashboard.
+
+### 4) Security note
+
+Admin pages are protected by session auth. If you’re not logged in, you’ll be redirected to `admin/login.php`.
 
 ### Test Credentials
 
