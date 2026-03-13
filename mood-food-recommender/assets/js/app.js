@@ -4,7 +4,11 @@
  */
 
 // API Base URL
-const API_BASE = window.location.origin + '/mood-food-recommender/api';
+const APP_BASE_URL =
+    (typeof window !== 'undefined' && window.APP_BASE_URL)
+        ? window.APP_BASE_URL
+        : (window.location.origin + '/mood-food-recommender');
+const API_BASE = APP_BASE_URL.replace(/\/+$/, '') + '/api';
 
 // State Management
 const AppState = {

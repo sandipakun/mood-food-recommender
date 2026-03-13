@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/config/config.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up - Mood Food Recommender</title>
     
+    <script>
+        window.APP_BASE_URL = '<?php echo htmlspecialchars(BASE_URL, ENT_QUOTES, 'UTF-8'); ?>';
+    </script>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
@@ -85,7 +89,7 @@
             formData.append('action', 'register');
             
             try {
-                const response = await fetch('api/auth.php?action=register', {
+                const response = await fetch(API_BASE + '/auth.php?action=register', {
                     method: 'POST',
                     body: formData
                 });

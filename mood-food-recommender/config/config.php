@@ -34,6 +34,41 @@ define('ROOT_PATH', dirname(__DIR__));
 define('API_PATH', ROOT_PATH . '/api');
 define('ASSETS_PATH', ROOT_PATH . '/assets');
 
+// ---------- Global URL & redirect helpers ----------
+/**
+ * Universal redirect helper based on BASE_URL.
+ *
+ * Examples:
+ *   redirect('dashboard.php');
+ *   redirect('admin/dashboard.php');
+ *   redirect('/admin/dashboard.php');
+ *   redirect('http://example.com/custom'); // absolute URL supported
+ */
+function redirect(string $path): void
+{
+    if (preg_match('~^https?://~i', $path)) {
+        $target = $path;
+    } else {
+        $target = rtrim(BASE_URL, '/') . '/' . ltrim($path, '/');
+    }
+
+    header('Location: ' . $target);
+    exit;
+}
+
+/**
+ * Build an absolute admin URL from a relative path.
+ *
+ * Examples:
+ *   admin_url('dashboard.php');
+ *   admin_url('/settings.php');
+ */
+function admin_url(string $path = ''): string
+{
+    $path = ltrim($path, '/');
+    return rtrim(BASE_URL, '/') . '/admin/' . $path;
+}
+
 // ---------- Core bootstrap ----------
 // Database (PDO, utf8mb4, port 3307)
 require_once ROOT_PATH . '/config/database.php';

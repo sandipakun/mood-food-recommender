@@ -5,7 +5,7 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/includes/config.php';
 
 if (admin_is_logged_in()) {
-    redirect(admin_url('dashboard.php'));
+    redirect('admin/dashboard.php');
 }
 
 $db = getDB();
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $db->prepare("INSERT INTO admin_users (username, email, password_hash) VALUES (?, ?, ?)");
                 $stmt->execute([$username, $email, $hash]);
                 flash_set('success', 'Admin user created. Please log in.');
-                redirect(admin_url('login.php'));
+                redirect('admin/login.php');
             } catch (PDOException $e) {
                 error_log('Admin bootstrap failed: ' . $e->getMessage());
                 $error = 'Failed to create admin user.';
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ];
                 $upd = $db->prepare("UPDATE admin_users SET last_login_at = NOW() WHERE id = ?");
                 $upd->execute([(int)$admin['id']]);
-                redirect(admin_url('dashboard.php'));
+                redirect('admin/dashboard.php');
             }
         }
     }
@@ -152,7 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <div class="mt-4 text-center text-muted" style="font-size:.9rem;">
-          Back to site: <a href="/mood-food-recommender/" style="font-weight:800; color: var(--accent-pink); text-decoration:none;">Mood Food</a>
+          Back to site: <a href="<?= e(BASE_URL) ?>/" style="font-weight:800; color: var(--accent-pink); text-decoration:none;">Mood Food</a>
         </div>
       </div>
     </div>

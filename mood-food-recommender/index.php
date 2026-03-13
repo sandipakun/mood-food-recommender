@@ -3,8 +3,7 @@ require_once __DIR__ . '/config/config.php';
 
 // Redirect logged-in users to dashboard
 if (isLoggedIn()) {
-    header('Location: dashboard.php');
-    exit;
+    redirect('dashboard.php');
 }
 ?>
 

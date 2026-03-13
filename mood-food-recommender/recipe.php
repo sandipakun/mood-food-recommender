@@ -3,8 +3,7 @@ require_once __DIR__ . '/config/config.php';
 
 // Redirect to login if not authenticated
 if (!isLoggedIn()) {
-    header('Location: login.php');
-    exit;
+    redirect('login.php');
 }
 ?>
 <!DOCTYPE html>

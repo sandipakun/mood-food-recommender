@@ -6,5 +6,5 @@ unset($_SESSION['admin_user']);
 session_regenerate_id(true);
 
 flash_set('success', 'Logged out.');
-redirect(admin_url('login.php'));
+redirect('admin/login.php');
 

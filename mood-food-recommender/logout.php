@@ -5,7 +5,6 @@ require_once __DIR__ . '/config/config.php';
 logoutUser();
 
 // Redirect to index page
-header('Location: index.php');
-exit;
+redirect('index.php');
 ?>
 

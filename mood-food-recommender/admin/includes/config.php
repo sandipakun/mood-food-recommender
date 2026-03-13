@@ -7,6 +7,9 @@
  * - This file is loaded AFTER config/config.php from admin/includes/header.php.
  */
 
+// Load global config (BASE_URL, redirect(), admin_url(), DB, utils, auth).
+require_once dirname(__DIR__, 2) . '/config/config.php';
+
 define('ADMIN_APP_NAME', 'Mood Food Admin');
 
 // Paths
@@ -19,26 +22,6 @@ define('PROJECT_ROOT', dirname(ADMIN_ROOT));            // project root
  */
 function e(string $value): string {
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-}
-
-/**
- * Admin URL helper (absolute, based on BASE_URL).
- */
-function admin_url(string $path): string {
-    $path = ltrim($path, '/');
-    if (defined('BASE_URL')) {
-        return rtrim(BASE_URL, '/') . '/admin/' . $path;
-    }
-    // Fallback if BASE_URL is not defined for some reason
-    return '/admin/' . $path;
-}
-
-/**
- * Redirect and exit.
- */
-function redirect(string $to): void {
-    header('Location: ' . $to);
-    exit;
 }
 
 /**
@@ -76,7 +59,7 @@ function admin_user(): ?array {
 
 function admin_require_login(): void {
     if (!admin_is_logged_in()) {
-        redirect(admin_url('login.php'));
+        redirect('admin/login.php');
     }
 }
 

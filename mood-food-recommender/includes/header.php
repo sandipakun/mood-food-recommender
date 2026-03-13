@@ -3,6 +3,9 @@
 // This header only needs utilities to check auth state.
 require_once __DIR__ . '/utils.php';
 ?>
+<script>
+    window.APP_BASE_URL = '<?php echo htmlspecialchars(BASE_URL, ENT_QUOTES, 'UTF-8'); ?>';
+</script>
 <header class="header-custom">
     <nav class="navbar navbar-expand-lg">
         <div class="container">

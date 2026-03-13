@@ -189,6 +189,30 @@ After creating it, log in and you’ll be redirected to the admin dashboard.
 
 Admin pages are protected by session auth. If you’re not logged in, you’ll be redirected to `admin/login.php`.
 
+### 5) Admin URLs & redirect troubleshooting
+
+- **Base URL** is defined in `config/config.php`:
+  ```php
+  define('BASE_URL', 'http://localhost/mood-food-recommender');
+  ```
+- **Admin URLs** are built with the global `admin_url()` helper (defined in `config/config.php`), for example:
+  ```php
+  admin_url('dashboard.php'); // http://localhost/mood-food-recommender/admin/dashboard.php
+  ```
+- **Redirects** use the global `redirect()` helper (also in `config/config.php`), which normalizes relative paths against `BASE_URL`. This ensures that even if code calls:
+  ```php
+  redirect('admin/dashboard.php');
+  redirect('/admin/dashboard.php');
+  ```
+  the browser will always be sent to:
+  ```text
+  http://localhost/mood-food-recommender/admin/dashboard.php
+  ```
+- If you see a **“Not Found – The requested URL was not found on this server.”** after admin login, verify:
+  - `BASE_URL` points to your project root (e.g. `http://localhost/mood-food-recommender`).
+  - You’re visiting `http://localhost/mood-food-recommender/admin/login.php` (not `http://localhost/admin/login.php`).
+  - Any custom redirects use `redirect('admin/...')` or `admin_url()` instead of hard-coded `/admin/...` URLs.
+
 ### Test Credentials
 
 After importing sample data, you can login with:
