@@ -50,7 +50,7 @@ function csrf_verify(): void {
  * Admin auth session helpers.
  */
 function admin_is_logged_in(): bool {
-    return !empty($_SESSION['admin_user']['id']);
+    return isset($_SESSION['admin_id']) && $_SESSION['admin_id'] !== '';
 }
 
 function admin_user(): ?array {

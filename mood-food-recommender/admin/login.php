@@ -1,11 +1,10 @@
 <?php
-// Load global app config (sessions, DB, BASE_URL, utils, auth)
 require_once __DIR__ . '/../config/config.php';
-// Load admin helpers (admin_is_logged_in, csrf, flash, etc.)
 require_once __DIR__ . '/includes/config.php';
+require_once __DIR__ . '/includes/auth.php';
 
 if (admin_is_logged_in()) {
-    redirect('admin/dashboard.php');
+    redirect('admin/index.php');
 }
 
 $db = getDB();
@@ -13,59 +12,44 @@ $adminCount = (int)$db->query("SELECT COUNT(*) AS c FROM admin_users")->fetch()[
 $needsBootstrap = $adminCount === 0;
 
 $error = null;
+$flash = flash_get();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
-
     $action = $_POST['action'] ?? 'login';
 
     if ($action === 'bootstrap' && $needsBootstrap) {
-        $username = sanitize($_POST['username'] ?? '');
-        $email = sanitize($_POST['email'] ?? '');
+        $username = trim((string)($_POST['username'] ?? ''));
+        $email    = trim((string)($_POST['email'] ?? ''));
         $password = (string)($_POST['password'] ?? '');
+        $confirm  = (string)($_POST['confirm_password'] ?? '');
 
-        if (!$username || !$email || !$password) {
+        if (!$username || !$email || !$password || !$confirm) {
             $error = 'All fields are required.';
-        } elseif (!isValidEmail($email)) {
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = 'Invalid email address.';
+        } elseif ($password !== $confirm) {
+            $error = 'Passwords do not match.';
         } elseif (strlen($password) < 8) {
             $error = 'Password must be at least 8 characters.';
         } else {
-            try {
-                $hash = password_hash($password, PASSWORD_BCRYPT);
-                $stmt = $db->prepare("INSERT INTO admin_users (username, email, password_hash) VALUES (?, ?, ?)");
-                $stmt->execute([$username, $email, $hash]);
+            $regErrors = admin_register($username, $email, $password, $confirm);
+            if (!empty($regErrors)) {
+                $error = implode(' ', $regErrors);
+            } else {
                 flash_set('success', 'Admin user created. Please log in.');
                 redirect('admin/login.php');
-            } catch (PDOException $e) {
-                error_log('Admin bootstrap failed: ' . $e->getMessage());
-                $error = 'Failed to create admin user.';
             }
         }
     } else {
-        $login = sanitize($_POST['login'] ?? '');
+        $login    = trim((string)($_POST['login'] ?? ''));
         $password = (string)($_POST['password'] ?? '');
-
         if (!$login || !$password) {
-            $error = 'Enter your username/email and password.';
+            $error = 'Enter your email (or username) and password.';
+        } elseif (!admin_login($login, $password)) {
+            $error = 'Invalid email/username or password.';
         } else {
-            $stmt = $db->prepare("SELECT id, username, email, password_hash, is_active FROM admin_users WHERE username = ? OR email = ? LIMIT 1");
-            $stmt->execute([$login, $login]);
-            $admin = $stmt->fetch();
-
-            if (!$admin || (int)$admin['is_active'] !== 1 || !password_verify($password, $admin['password_hash'])) {
-                $error = 'Invalid credentials.';
-            } else {
-                session_regenerate_id(true);
-                $_SESSION['admin_user'] = [
-                    'id' => (int)$admin['id'],
-                    'username' => (string)$admin['username'],
-                    'email' => (string)$admin['email'],
-                ];
-                $upd = $db->prepare("UPDATE admin_users SET last_login_at = NOW() WHERE id = ?");
-                $upd->execute([(int)$admin['id']]);
-                redirect('admin/dashboard.php');
-            }
+            redirect('admin/index.php');
         }
     }
 }
@@ -96,6 +80,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           </div>
         </div>
 
+        <?php if ($flash): ?>
+          <div class="alert alert-<?= e($flash['type']) ?> admin-alert"><?= e($flash['message']) ?></div>
+        <?php endif; ?>
         <?php if ($error): ?>
           <div class="alert alert-danger admin-alert"><?= e($error) ?></div>
         <?php endif; ?>
@@ -118,12 +105,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="mb-3">
               <label class="form-label">Password</label>
               <div class="input-group">
-                <input class="form-control" type="password" name="password" minlength="8" required>
+                <input class="form-control" type="password" name="password" minlength="8" required autocomplete="new-password">
                 <button class="btn btn-outline-pink" type="button" onclick="const i=this.parentElement.querySelector('input'); i.type=i.type==='password'?'text':'password';">
                   <i class="bi bi-eye"></i>
                 </button>
               </div>
               <div class="form-text">Minimum 8 characters.</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Confirm Password</label>
+              <div class="input-group">
+                <input class="form-control" type="password" name="confirm_password" minlength="8" required autocomplete="new-password" placeholder="Re-enter password">
+                <button class="btn btn-outline-pink" type="button" onclick="const i=this.parentElement.querySelector('input'); i.type=i.type==='password'?'text':'password';">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
             </div>
             <button class="btn btn-pink w-100" type="submit">
               <i class="bi bi-shield-lock me-1"></i>Create admin
@@ -148,6 +144,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <button class="btn btn-pink w-100" type="submit">
               <i class="bi bi-box-arrow-in-right me-1"></i>Login
             </button>
+            <div class="mt-3 text-center">
+              <a href="<?= admin_url('register.php') ?>" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-person-plus me-1"></i>Register new admin
+              </a>
+            </div>
           </form>
         <?php endif; ?>
 

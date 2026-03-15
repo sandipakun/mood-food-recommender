@@ -48,18 +48,22 @@ mood-food-recommender/
 │   ├── js/
 │   │   └── app.js         # Main JavaScript
 │   └── images/            # Recipe images (optional)
-├── admin/                  # Admin panel (dashboard, CRUD, analytics)
+├── admin/                  # Admin panel (home, dashboard, CRUD, analytics)
 │   ├── assets/
 │   │   ├── css/admin.css
 │   │   └── js/admin.js
 │   ├── includes/           # Admin layout + helpers
-│   │   ├── config.php
+│   │   ├── config.php      # Loads app config (PDO via getDB); CSRF, flash, session helpers
+│   │   ├── auth.php        # Admin login, register, logout (password_hash/verify, prepared stmts)
+│   │   ├── auth_check.php  # Requires login; redirects to login.php if not logged in
 │   │   ├── header.php
 │   │   ├── sidebar.php
 │   │   └── footer.php
+│   ├── index.php           # Admin home (welcome + quick links; protected)
+│   ├── login.php           # Admin login (email/username + password); first-time bootstrap
+│   ├── register.php        # Register new admin (open to all; also from dashboard when logged in)
+│   ├── logout.php          # End admin session
 │   ├── dashboard.php
-│   ├── login.php
-│   ├── logout.php
 │   ├── recipes.php
 │   ├── add_recipe.php
 │   ├── moods.php
@@ -180,16 +184,48 @@ Open:
 
 - `http://localhost/mood-food-recommender/admin/login.php`
 
-### 3) First-time admin setup (bootstrap)
+From here you can **Log in** (email or username + password) or **Register new admin** (link below the login button). Both options are on the same page.
 
-If **no rows exist in `admin_users`**, the login page will automatically show a **“Create the first admin account”** form.
-After creating it, log in and you’ll be redirected to the admin dashboard.
+### 3) First-time admin setup (bootstrap) and registering new admins
 
-### 4) Security note
+If **no rows exist in `admin_users`**, the login page shows a **“Create the first admin account”** form (Username, Email, Password, Confirm Password; min 8 characters). After creating it, log in and you’re redirected to the admin dashboard.
 
-Admin pages are protected by session auth. If you’re not logged in, you’ll be redirected to `admin/login.php`.
+When at least one admin already exists, the login page shows the normal **Login** form plus a **Register new admin** button. Anyone can open **Register new admin** (or go directly to `admin/register.php`) to create an admin account—no login required. After registration, you’re redirected to the login page with a success message so you can sign in. Logged-in admins can also create new admins from **Admin Home** → **Register Admin**, which shows the same form inside the dashboard layout.
 
-### 5) Admin URLs & redirect troubleshooting
+### 4) Admin panel pages
+
+Once logged in, the sidebar links work as follows:
+
+| Page | URL | Description |
+|------|-----|-------------|
+| **Admin Home** | `admin/index.php` | Overview page with welcome message and quick tiles (Dashboard, Recipes, Moods, Users, Analytics, Add Recipe, **Register Admin**, Settings). Only accessible when logged in. |
+| **Dashboard** | `admin/dashboard.php` | **Real metrics**: Total Recipes, Total Users, Total Moods (3 KPI cards). **Charts** (Chart.js, loaded in footer): **Recipes by Cuisine** (pie, from `recipes` JOIN `cuisines`), **Recipes by Mood** (bar, from `recipes.mood_tags_json`; no `recipe_moods` table), **User Registrations last 30 days** (line). If a chart has no data, the dashboard shows "No data available yet" instead of an empty chart. |
+| **Recipes** | `admin/recipes.php` | List all recipes with cuisine, views, status; link to Add recipe |
+| **Add recipe** | `admin/add_recipe.php` | Form to create a recipe (title, slug, cuisine, description, moods, ingredients/steps JSON); submits to API and redirects back with success message |
+| **Moods** | `admin/moods.php` | List moods with slug, icon, color, and recipe count |
+| **Users** | `admin/users.php` | List users with username, email, premium status, joined date |
+| **Analytics** | `admin/analytics.php` | **Real data**: Top recipes by views (table, from `recipes.views_count`), Recent users (table), Most popular moods (table + bar chart based on total views per mood, derived from `recipes.views_count` + `recipes.mood_tags_json`). |
+| **Register Admin** | `admin/register.php` | Create new admin accounts (username, email, password, confirm password). **Open to everyone** from the login page; when logged in, the same page is available from the dashboard with sidebar layout. After success, guests are redirected to login; logged-in admins are redirected to Admin Home. |
+| **Settings** | `admin/settings.php` | Read-only app name, version, and base URL |
+
+All admin links use the `admin_url('filename.php')` helper so they work regardless of install path.
+
+**Admin authentication system:**
+- **`admin/includes/config.php`** — Loads the main app config (so PDO/MySQL is available via `getDB()`), defines CSRF and flash helpers, and session checks (`admin_is_logged_in()`, `admin_require_login()`).
+- **`admin/includes/auth.php`** — Centralized auth logic: `admin_login()` (email or username + password, uses `password_verify()`), `admin_register()` (validates unique username/email, password ≥ 8 chars, confirm match; uses `password_hash(PASSWORD_DEFAULT)` and prepared statements), `admin_logout()` (clears session). All DB access uses prepared statements.
+- **Protected pages** — Admin pages that require login (index, dashboard, recipes, users, analytics, etc.) use `admin_require_login()` (or `auth_check.php`) and redirect to `admin/login.php` if not logged in. **Login** and **Register** are public; no login required to register a new admin.
+- **Multiple admins** — The `admin_users` table supports many accounts; multiple admins can be logged in at once (each has their own session).
+- **Bootstrap 5** is used for admin forms and dashboard layout; flash messages show success/error after login, registration, and redirects.
+
+**Dashboard charts:** Chart.js is loaded in the admin footer. The dashboard runs chart initialization only after the footer (so `Chart` is defined). Cuisine data comes from `recipes` JOIN `cuisines`; mood data is derived from `recipes.mood_tags_json` (the schema does not use a `recipe_moods` table). Required tables: `recipes`, `cuisines`, `moods`, `users`. Recipe popularity is tracked via the `recipes.views_count` column, which is incremented when users open recipe detail pages; admin analytics uses this for **Top recipes by views** and **Most popular moods**.
+
+**Admin authentication:** Admin login and registration happen via `admin/login.php` and `admin/register.php`. The login page shows the sign-in form (or the first-admin setup form when no admins exist), a **Register new admin** button, and a **Back to site** link. You can create new admin accounts from the login page without logging in, or from **Admin Home** → **Register Admin** when already logged in. After registering, you’re redirected to the login page to sign in with the new account.
+
+### 5) Security note
+
+Admin pages are protected by session auth. If you’re not logged in, you’ll be redirected to `admin/login.php`. The Admin Recipe API (`/api/admin/recipes.php`) accepts **admin session** first; if an admin is logged in, front-end user login is not required for CRUD.
+
+### 6) Admin URLs & redirect troubleshooting
 
 - **Base URL** is defined in `config/config.php`:
   ```php
@@ -249,10 +285,10 @@ The system includes **9 moods** with unique recipe recommendations:
 - `GET /api/subscription.php` - Get subscription status
 - `POST /api/subscription.php?action=toggle` - Toggle premium (testing)
 
-### Admin
+### Admin (requires admin login or front-end auth)
 - `GET /api/admin/recipes.php` - List all recipes
 - `GET /api/admin/recipes.php?action=get&id=<id>` - Get single recipe
-- `POST /api/admin/recipes.php?action=create` - Create recipe
+- `POST /api/admin/recipes.php?action=create` - Create recipe (accepts `mood_slugs[]` or `mood_tags_json`)
 - `POST /api/admin/recipes.php?action=update` - Update recipe
 - `DELETE /api/admin/recipes.php?action=delete&id=<id>` - Delete recipe
 
@@ -426,6 +462,8 @@ move_uploaded_file($_FILES['image']['tmp_name'], $uploadDir . $filename);
 - [ ] User registration works
 - [ ] User login/logout works
 - [ ] Premium features gated correctly
+- [ ] Admin: Dashboard, Recipes, Add recipe, Moods, Users, Analytics, Settings all load without errors
+- [ ] Admin: Add recipe form submits and redirects to Recipes with success message
 
 ### Responsiveness
 - [ ] Mobile (320px, 375px, 414px)
@@ -444,7 +482,7 @@ move_uploaded_file($_FILES['image']['tmp_name'], $uploadDir . $filename);
 ### Security
 - [ ] SQL injection prevention (prepared statements)
 - [ ] XSS prevention (input sanitization)
-- [ ] CSRF protection (add tokens)
+- [ ] CSRF protection (admin forms use CSRF tokens)
 - [ ] Password hashing (bcrypt)
 - [ ] Session security (httponly, secure cookies)
 

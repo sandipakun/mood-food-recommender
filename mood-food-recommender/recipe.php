@@ -5,6 +5,20 @@ require_once __DIR__ . '/config/config.php';
 if (!isLoggedIn()) {
     redirect('login.php');
 }
+
+// Increment recipe view count when page loads with an id (once per session per recipe to prevent refresh spam)
+$recipe_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+if ($recipe_id > 0) {
+    if (!isset($_SESSION['viewed_recipes'])) {
+        $_SESSION['viewed_recipes'] = [];
+    }
+    if (!isset($_SESSION['viewed_recipes'][$recipe_id])) {
+        $db = getDB();
+        $stmt = $db->prepare("UPDATE recipes SET views_count = views_count + 1 WHERE id = ?");
+        $stmt->execute([$recipe_id]);
+        $_SESSION['viewed_recipes'][$recipe_id] = true;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">

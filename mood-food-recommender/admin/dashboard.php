@@ -6,22 +6,26 @@ $current = 'dashboard';
 
 $db = getDB();
 
-// KPI cards
+// KPI cards (real metrics from database)
 $totalRecipes = (int)$db->query("SELECT COUNT(*) c FROM recipes")->fetch()['c'];
 $totalUsers = (int)$db->query("SELECT COUNT(*) c FROM users")->fetch()['c'];
-$totalPremiumUsers = (int)$db->query("SELECT COUNT(*) c FROM users WHERE is_premium = 1")->fetch()['c'];
 $totalMoods = (int)$db->query("SELECT COUNT(*) c FROM moods")->fetch()['c'];
 
-// Recipes by cuisine
+// Recipes by cuisine (recipes have cuisine_id; join cuisines for name)
 $cuisineRows = $db->query("
-  SELECT c.name AS cuisine, COUNT(*) AS count
+  SELECT c.name AS cuisine, COUNT(*) AS total
   FROM recipes r
   JOIN cuisines c ON c.id = r.cuisine_id
-  GROUP BY c.id
-  ORDER BY count DESC, c.name ASC
-")->fetchAll();
-$cuisineLabels = array_map(fn($r) => $r['cuisine'], $cuisineRows);
-$cuisineCounts = array_map(fn($r) => (int)$r['count'], $cuisineRows);
+  GROUP BY c.id, c.name
+  ORDER BY total DESC, c.name ASC
+")->fetchAll(PDO::FETCH_ASSOC);
+$cuisineLabels = [];
+$cuisineCounts = [];
+foreach ($cuisineRows as $row) {
+  $cuisineLabels[] = $row['cuisine'];
+  $cuisineCounts[] = (int)$row['total'];
+}
+$hasCuisineData = count($cuisineLabels) > 0;
 
 // Recipes by mood (count slugs from mood_tags_json in PHP for compatibility)
 $moodSlugs = $db->query("SELECT slug, name, icon FROM moods ORDER BY name ASC")->fetchAll();
@@ -44,6 +48,7 @@ foreach ($moodCounts as $slug => $count) {
     $moodLabels[] = $label;
     $moodValues[] = (int)$count;
 }
+$hasMoodData = count($moodLabels) > 0;
 
 // User registrations last 30 days
 $regRows = $db->query("
@@ -64,12 +69,14 @@ for ($i = 0; $i < 30; $i++) {
     $regLabels[] = $d;
     $regCounts[] = $regMap[$d] ?? 0;
 }
+$hasUserData = true; // 30-day range always has labels/counts (counts may be zeros)
 
 include __DIR__ . '/includes/header.php';
 ?>
 
+<!-- Top row: Total Recipes, Total Users, Total Moods -->
 <div class="row g-3 mb-3">
-  <div class="col-12 col-md-6 col-xl-3">
+  <div class="col-12 col-md-6 col-xl-4">
     <div class="card card-admin">
       <div class="card-body">
         <div class="d-flex align-items-center justify-content-between">
@@ -82,7 +89,7 @@ include __DIR__ . '/includes/header.php';
       </div>
     </div>
   </div>
-  <div class="col-12 col-md-6 col-xl-3">
+  <div class="col-12 col-md-6 col-xl-4">
     <div class="card card-admin">
       <div class="card-body">
         <div class="d-flex align-items-center justify-content-between">
@@ -95,20 +102,7 @@ include __DIR__ . '/includes/header.php';
       </div>
     </div>
   </div>
-  <div class="col-12 col-md-6 col-xl-3">
-    <div class="card card-admin">
-      <div class="card-body">
-        <div class="d-flex align-items-center justify-content-between">
-          <div>
-            <div class="text-muted">Premium Users</div>
-            <div class="h2 mb-0" style="font-weight:900;"><?= number_format($totalPremiumUsers) ?></div>
-          </div>
-          <div class="chip"><i class="bi bi-stars"></i> Premium</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-12 col-md-6 col-xl-3">
+  <div class="col-12 col-md-6 col-xl-4">
     <div class="card card-admin">
       <div class="card-body">
         <div class="d-flex align-items-center justify-content-between">
@@ -131,7 +125,11 @@ include __DIR__ . '/includes/header.php';
           <div class="h5 mb-0" style="font-weight:900;">Recipes by Cuisine</div>
           <div class="text-muted">Distribution</div>
         </div>
-        <canvas id="chartCuisine" height="160"></canvas>
+        <?php if ($hasCuisineData): ?>
+          <canvas id="cuisineChart" height="160"></canvas>
+        <?php else: ?>
+          <p class="text-muted mb-0">No data available yet.</p>
+        <?php endif; ?>
       </div>
     </div>
   </div>
@@ -142,7 +140,11 @@ include __DIR__ . '/includes/header.php';
           <div class="h5 mb-0" style="font-weight:900;">Recipes by Mood</div>
           <div class="text-muted">Tag counts</div>
         </div>
-        <canvas id="chartMood" height="160"></canvas>
+        <?php if ($hasMoodData): ?>
+          <canvas id="moodChart" height="160"></canvas>
+        <?php else: ?>
+          <p class="text-muted mb-0">No data available yet.</p>
+        <?php endif; ?>
       </div>
     </div>
   </div>
@@ -153,89 +155,101 @@ include __DIR__ . '/includes/header.php';
           <div class="h5 mb-0" style="font-weight:900;">User Registrations (Last 30 days)</div>
           <div class="text-muted">Daily</div>
         </div>
-        <canvas id="chartUsers" height="90"></canvas>
+        <?php if ($hasUserData): ?>
+          <canvas id="userChart" height="90"></canvas>
+        <?php else: ?>
+          <p class="text-muted mb-0">No data available yet.</p>
+        <?php endif; ?>
       </div>
     </div>
   </div>
 </div>
 
+<?php include __DIR__ . '/includes/footer.php'; ?>
+<!-- Chart.js is loaded in footer; init runs after so Chart is defined -->
 <script>
+(function() {
+  if (typeof Chart === 'undefined') return;
   const PINK = {
     border: 'rgba(255,20,147,0.75)',
     fill: 'rgba(255,182,193,0.35)',
-    solid: 'rgba(255,105,180,0.9)',
     grid: 'rgba(255,182,193,0.35)',
     text: '#5a3d5c',
   };
-
-  new Chart(document.getElementById('chartCuisine'), {
-    type: 'doughnut',
-    data: {
-      labels: <?= json_encode($cuisineLabels, JSON_UNESCAPED_UNICODE) ?>,
-      datasets: [{
-        data: <?= json_encode($cuisineCounts) ?>,
-        backgroundColor: [
-          'rgba(255,105,180,0.75)',
-          'rgba(255,182,193,0.75)',
-          'rgba(255,20,147,0.70)',
-          'rgba(255,145,164,0.75)',
-          'rgba(255,235,243,1)',
-          'rgba(255,105,180,0.55)'
-        ],
-        borderColor: 'rgba(255,255,255,0.9)',
-        borderWidth: 2
-      }]
-    },
-    options: {
-      plugins: { legend: { position: 'bottom', labels: { color: PINK.text } } }
-    }
-  });
-
-  new Chart(document.getElementById('chartMood'), {
-    type: 'bar',
-    data: {
-      labels: <?= json_encode($moodLabels, JSON_UNESCAPED_UNICODE) ?>,
-      datasets: [{
-        label: 'Recipes',
-        data: <?= json_encode($moodValues) ?>,
-        backgroundColor: 'rgba(255,182,193,0.55)',
-        borderColor: 'rgba(255,20,147,0.6)',
-        borderWidth: 2,
-        borderRadius: 10
-      }]
-    },
-    options: {
-      scales: {
-        x: { ticks: { color: PINK.text }, grid: { color: 'transparent' } },
-        y: { ticks: { color: PINK.text }, grid: { color: PINK.grid } }
+  var cuisineEl = document.getElementById('cuisineChart');
+  if (cuisineEl) {
+    new Chart(cuisineEl, {
+      type: 'pie',
+      data: {
+        labels: <?= json_encode($cuisineLabels, JSON_UNESCAPED_UNICODE) ?>,
+        datasets: [{
+          data: <?= json_encode($cuisineCounts) ?>,
+          backgroundColor: [
+            'rgba(255,105,180,0.75)',
+            'rgba(255,182,193,0.75)',
+            'rgba(255,20,147,0.70)',
+            'rgba(255,145,164,0.75)',
+            'rgba(255,235,243,1)',
+            'rgba(255,105,180,0.55)'
+          ],
+          borderColor: 'rgba(255,255,255,0.9)',
+          borderWidth: 2
+        }]
       },
-      plugins: { legend: { display: false } }
-    }
-  });
-
-  new Chart(document.getElementById('chartUsers'), {
-    type: 'line',
-    data: {
-      labels: <?= json_encode($regLabels) ?>,
-      datasets: [{
-        label: 'New users',
-        data: <?= json_encode($regCounts) ?>,
-        borderColor: PINK.border,
-        backgroundColor: PINK.fill,
-        tension: 0.35,
-        fill: true,
-        pointRadius: 2
-      }]
-    },
-    options: {
-      scales: {
-        x: { ticks: { color: PINK.text, maxTicksLimit: 10 }, grid: { color: 'transparent' } },
-        y: { ticks: { color: PINK.text }, grid: { color: PINK.grid } }
+      options: {
+        plugins: { legend: { position: 'bottom', labels: { color: PINK.text } } }
+      }
+    });
+  }
+  var moodEl = document.getElementById('moodChart');
+  if (moodEl) {
+    new Chart(moodEl, {
+      type: 'bar',
+      data: {
+        labels: <?= json_encode($moodLabels, JSON_UNESCAPED_UNICODE) ?>,
+        datasets: [{
+          label: 'Recipes',
+          data: <?= json_encode($moodValues) ?>,
+          backgroundColor: 'rgba(255,182,193,0.55)',
+          borderColor: 'rgba(255,20,147,0.6)',
+          borderWidth: 2,
+          borderRadius: 10
+        }]
       },
-      plugins: { legend: { display: false } }
-    }
-  });
+      options: {
+        scales: {
+          x: { ticks: { color: PINK.text }, grid: { color: 'transparent' } },
+          y: { ticks: { color: PINK.text }, grid: { color: PINK.grid } }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+  var userEl = document.getElementById('userChart');
+  if (userEl) {
+    new Chart(userEl, {
+      type: 'line',
+      data: {
+        labels: <?= json_encode($regLabels) ?>,
+        datasets: [{
+          label: 'User Registrations',
+          data: <?= json_encode($regCounts) ?>,
+          borderColor: PINK.border,
+          backgroundColor: PINK.fill,
+          tension: 0.35,
+          fill: true,
+          pointRadius: 2
+        }]
+      },
+      options: {
+        scales: {
+          x: { ticks: { color: PINK.text, maxTicksLimit: 10 }, grid: { color: 'transparent' } },
+          y: { ticks: { color: PINK.text }, grid: { color: PINK.grid } }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+})();
 </script>
-
-<?php include __DIR__ . '/includes/footer.php'; ?>
 

@@ -34,8 +34,15 @@ try {
         errorResponse('Recipe not found', 404);
     }
     
-    // Increment view count
-    $db->prepare("UPDATE recipes SET views_count = views_count + 1 WHERE id = ?")->execute([$recipeId]);
+    // Increment view count once per session per recipe (prevents refresh spam)
+    if (!isset($_SESSION['viewed_recipes'])) {
+        $_SESSION['viewed_recipes'] = [];
+    }
+    if (!isset($_SESSION['viewed_recipes'][$recipeId])) {
+        $db->prepare("UPDATE recipes SET views_count = views_count + 1 WHERE id = ?")->execute([$recipeId]);
+        $_SESSION['viewed_recipes'][$recipeId] = true;
+        $recipe['views_count'] = (int)$recipe['views_count'] + 1; // so response reflects new count
+    }
     
     // Parse JSON fields
     $ingredients = parseJsonField($recipe['ingredients_json']);

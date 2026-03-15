@@ -1,10 +1,8 @@
 <?php
 require_once __DIR__ . '/includes/config.php';
+require_once __DIR__ . '/includes/auth.php';
 
-$_SESSION['admin_user'] = null;
-unset($_SESSION['admin_user']);
-session_regenerate_id(true);
-
-flash_set('success', 'Logged out.');
+admin_logout();
+flash_set('success', 'You have been logged out.');
 redirect('admin/login.php');
 

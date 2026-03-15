@@ -9,9 +9,11 @@
  */
 
 require_once dirname(__DIR__, 2) . '/config/config.php';
+require_once dirname(__DIR__, 2) . '/admin/includes/config.php';
 
-requireAuth();
-// In production, add admin role check here
+if (!function_exists('admin_is_logged_in') || !admin_is_logged_in()) {
+    requireAuth();
+}
 
 // Image upload configuration
 define('IMAGE_UPLOAD_DIR', ASSETS_PATH . '/images/recipes/');
@@ -84,12 +86,17 @@ function handleGetRecipe() {
 function handleCreateRecipe() {
     $db = getDB();
     
-    // Validate required fields
-    $required = ['title', 'cuisine_id', 'mood_tags_json'];
+    // Validate required fields (mood_tags_json can be empty array or come from mood_slugs[])
+    $required = ['title', 'cuisine_id'];
     foreach ($required as $field) {
         if (empty($_POST[$field])) {
             errorResponse("Field '$field' is required", 400);
         }
+    }
+    $moodTagsJson = $_POST['mood_tags_json'] ?? null;
+    if ($moodTagsJson === null || $moodTagsJson === '') {
+        $moodSlugs = $_POST['mood_slugs'] ?? [];
+        $moodTagsJson = is_array($moodSlugs) ? json_encode(array_values($moodSlugs)) : '[]';
     }
     
     // Handle image upload if provided
@@ -119,6 +126,8 @@ function handleCreateRecipe() {
             $values[] = $slug;
         } elseif ($field === 'image_url') {
             $values[] = $imagePath;
+        } elseif ($field === 'mood_tags_json') {
+            $values[] = $moodTagsJson;
         } else {
             $values[] = $_POST[$field] ?? null;
         }

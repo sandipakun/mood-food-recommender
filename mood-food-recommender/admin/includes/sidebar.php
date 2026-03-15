@@ -31,6 +31,9 @@ $current = $current ?? '';
       <i class="bi bi-graph-up"></i><span>Analytics</span>
     </a>
     <div class="admin-nav-divider"></div>
+    <a class="admin-nav <?= $current === 'register' ? 'active' : '' ?>" href="<?= admin_url('register.php') ?>">
+      <i class="bi bi-person-plus"></i><span>Register Admin</span>
+    </a>
     <a class="admin-nav <?= $current === 'settings' ? 'active' : '' ?>" href="<?= admin_url('settings.php') ?>">
       <i class="bi bi-gear"></i><span>Settings</span>
     </a>
